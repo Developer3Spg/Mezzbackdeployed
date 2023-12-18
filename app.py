@@ -49,19 +49,20 @@ app.config['UPLOAD_FOLDER'] = 'pdfs'
 db = SQLAlchemy(app)
 app.secret_key = '6de23aa303c89bb1ab31a42a39b419ba3ce26cae8821cfa7c060878c63b827b1'
 
-redis_url = 'redis://:tEzmjbcyLdnJ4yc9OYS2iG7GcqI1m9gB@redis-16721.c322.us-east-1-2.ec2.cloud.redislabs.com:16721'  # Replace with your actual Redis URL
+# redis_url = 'redis://:tEzmjbcyLdnJ4yc9OYS2iG7GcqI1m9gB@redis-16721.c322.us-east-1-2.ec2.cloud.redislabs.com:16721'  # Replace with your actual Redis URL
 
 
-# Direct Redis Configuration for Testing
 # Session configuration for Redis
-app.config["SESSION_REDIS"] = redis.from_url(redis_url)
 app.config["SESSION_TYPE"] = "redis"
+app.config["SESSION_REDIS"] = redis.StrictRedis(
+    host='redis-16721.c322.us-east-1-2.ec2.cloud.redislabs.com',
+    port=16721,
+    password='tEzmjbcyLdnJ4yc9OYS2iG7GcqI1m9gB',
+    decode_responses=True  # Set this to True if your Redis stores strings
+)
+
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_USE_SIGNER"] = False
-# Set the session to expire after 1 hour
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
-# Enable secure session cookies (useful if your site is HTTPS)
-app.config['SESSION_COOKIE_SECURE'] = True
 Session(app)
 
 def test_redis_connection():
