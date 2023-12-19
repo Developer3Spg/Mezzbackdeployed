@@ -49,7 +49,7 @@ app.config['UPLOAD_FOLDER'] = 'pdfs'
 db = SQLAlchemy(app)
 app.secret_key = '6de23aa303c89bb1ab31a42a39b419ba3ce26cae8821cfa7c060878c63b827b1'
 
-# redis_url = 'redis://:tEzmjbcyLdnJ4yc9OYS2iG7GcqI1m9gB@redis-16721.c322.us-east-1-2.ec2.cloud.redislabs.com:16721'  # Replace with your actual Redis URL
+redis_url = 'redis://:tEzmjbcyLdnJ4yc9OYS2iG7GcqI1m9gB@redis-16721.c322.us-east-1-2.ec2.cloud.redislabs.com:16721'  # Replace with your actual Redis URL
 
 
 # Session configuration for Redis
@@ -58,22 +58,23 @@ app.config["SESSION_REDIS"] = redis.StrictRedis(
     host='redis-16721.c322.us-east-1-2.ec2.cloud.redislabs.com',
     port=16721,
     password='tEzmjbcyLdnJ4yc9OYS2iG7GcqI1m9gB',
-    decode_responses=True  # Set this to True if your Redis stores strings
+    decode_responses=True,  # Set this to True if your Redis stores strings # This might be necessary depending on your SSL setup
 )
 
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_USE_SIGNER"] = False
+app.config["SESSION_PERMANENT"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
 Session(app)
 
+# Function to test Redis connection
 def test_redis_connection():
     try:
-        r = redis.from_url(redis_url)
-        r.ping()
-        logger.info("Connected to Redis")
-    except redis.ConnectionError:
-        logger.error("Failed to connect to Redis")
+        app.config['SESSION_REDIS'].ping()
+        print("Connected to Redis")
+    except Exception as e:
+        print(f"Failed to connect to Redis: {e}")
 
-
+# Call the test function
+test_redis_connection()
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
