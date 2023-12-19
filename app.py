@@ -255,19 +255,6 @@ def register_user():
     return jsonify({'message': 'User registered successfully!'}), 201
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    logger.info(f"user_loader called with user_id: {user_id}")
-    user = User.query.get(int(user_id))
-    if user:
-        logger.info(f"Loaded user: {user.username}")
-        return user
-    else:
-        logger.info("User not found")
-        return None
-
-
-
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -299,8 +286,14 @@ def logout():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(session.get('user_id')))
-
+    logger.info(f"user_loader called with user_id: {user_id}")
+    user = User.query.get(int(user_id))
+    if user:
+        logger.info(f"Loaded user: {user.username}")
+        return user
+    else:
+        logger.info("User not found")
+        return None
 
 # ============Dashboard part===============
 
