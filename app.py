@@ -259,8 +259,12 @@ def register_user():
 def load_user(user_id):
     logger.info(f"user_loader called with user_id: {user_id}")
     user = User.query.get(int(user_id))
-    logger.info(f"Loaded user: {user}")
-    return user
+    if user:
+        logger.info(f"Loaded user: {user.username}")
+        return user
+    else:
+        logger.info("User not found")
+        return None
 
 
 
