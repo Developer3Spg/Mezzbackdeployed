@@ -49,6 +49,10 @@ app.config['UPLOAD_FOLDER'] = 'pdfs'
 db = SQLAlchemy(app)
 app.secret_key = '6de23aa303c89bb1ab31a42a39b419ba3ce26cae8821cfa7c060878c63b827b1'
 
+# Configure Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+
 # Initialize JWT
 jwt = JWTManager(app)
 
@@ -265,8 +269,9 @@ def profile():
 @app.route('/update_profile', methods=['PUT'])
 @jwt_required()  # This decorator ensures that a valid JWT token is required for access
 def update_profile():
-    data = request.get_json()
-    user = get_current_user()  # Implement a function to get the current user from the JWT token
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+  # Implement a function to get the current user from the JWT token
 
     if not user:
         return jsonify({'message': 'User not authenticated'}), 401
