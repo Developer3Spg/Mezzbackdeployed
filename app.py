@@ -496,7 +496,7 @@ def uploaded_pdf(filename):
 def approved_invoices():
     user_id = get_jwt_identity()
 
-    invoices = Invoice.query.filter_by(user=user_id).all()
+    invoices = Invoice.query.filter(user=user_id).all()
 
     invoice_data = []
     for invoice in invoices:
@@ -525,7 +525,7 @@ def approved_invoices():
 def pending_approval_invoices():
     user_id = get_jwt_identity()
 
-    invoices = Invoice.query.filter_by(user=user_id).all()
+    invoices = Invoice.query.filter(user=user_id).all()
 
     invoice_data = []
     for invoice in invoices:
@@ -609,7 +609,7 @@ def send_for_approval(invoice_id):
 @jwt_required()  # This decorator ensures that a valid JWT token is required for access
 def came_for_approval():
     user_id = current_user.id
-    sent_for_approval_records = SentForApproval.query.filter_by(buyer_id=user_id).all()
+    sent_for_approval_records = SentForApproval.query.filter(buyer_id=user_id).all()
 
     invoices_data = []
     for sent_for_approval_record in sent_for_approval_records:
@@ -635,7 +635,7 @@ def came_for_approval():
 @jwt_required()  # This decorator ensures that a valid JWT token is required for access
 def approve_invoice(invoice_id):
     invoice = Invoice.query.get(invoice_id)
-    sent_for_approval_row = SentForApproval.query.filter_by(invoice=invoice_id).first()
+    sent_for_approval_row = SentForApproval.query.filter(invoice=invoice_id).first()
 
     if invoice is None or sent_for_approval_row is None:
         return jsonify({"message": "Invoice not found"}), 404
