@@ -461,8 +461,11 @@ def submit_invoice():
         logging.error("Invalid due_date format in the invoice submission request. Use dd-mm-yyyy.")
         return jsonify({'error': 'Invalid due_date format. Use dd-mm-yyyy.'}), 400
 
+    # Fetch the corresponding User instance
+    user = User.query.get(user_id)
+
     new_invoice = Invoice(
-        user=user_id,
+        user=user,
         invoice_id=invoice_id,
         total_amount=total_amount,
         due_date=due_date,
