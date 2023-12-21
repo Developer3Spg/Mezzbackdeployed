@@ -584,7 +584,7 @@ def send_for_approval(invoice_id):
         logging.error(f"Invoice with ID {invoice_id} not found.")
         return jsonify({'error': 'Invoice not found.'}), 404
 
-    user_id = current_user.id
+    user_id = get_jwt_identity()
     buyer_id = invoice.buyer_id
     buyer_metamask_address = invoice.buyer_metamask_address
 
@@ -602,9 +602,8 @@ def send_for_approval(invoice_id):
     db.session.add(sent_for_approval)
     db.session.commit()
 
-    logging.info(f"Invoice with ID {invoice_id} sent for approval successfully.")
+    logging.info(f"Invoice with ID {invoice_id} sent for approval successfully by user {user_id}.")
     return jsonify({'message': 'Sent for approval successfully.'}), 200
-
 # ...
 
 @app.route('/came_for_approval', methods=['GET'])
