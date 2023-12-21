@@ -496,7 +496,7 @@ def uploaded_pdf(filename):
 def approved_invoices():
     user_id = get_jwt_identity()
 
-    invoices = Invoice.query.filter(Invoice.user == user_id).all()
+    invoices = Invoice.query.filter(Invoice.user_id == user_id).all()
 
     invoice_data = []
     for invoice in invoices:
@@ -657,7 +657,7 @@ def tokens():
     user_id = get_jwt_identity()
 
     # Check if the user (seller) has an approved invoice with the corresponding buyer ID
-    approved_invoice = Invoice.query.filter_by(user=user_id, approval_status=True).first()
+    approved_invoice = Invoice.query.filter_by(user_id=user_id, approval_status=True).first()
 
     if approved_invoice:
         # Allow the seller to access the tokens page
