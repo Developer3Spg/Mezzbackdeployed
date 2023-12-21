@@ -45,7 +45,7 @@ app = Flask(__name__)
 CORS(app, origins='https://mezzpro-production.vercel.app', supports_credentials=True)
 app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://shreeya:GTKvyyIQBPdE2lWnD80WhuhVm8JCtJ2B@dpg-clso8ftcm5oc73b94350-a.oregon-postgres.render.com/mezzprofinal'
 load_dotenv()
-app.config['UPLOAD_FOLDER'] = 'c:\Users\Owner\Desktop\FinalMEZZ\Mezzpro\backend\pdfs'
+app.config['UPLOAD_FOLDER'] =  r'c:\Users\Owner\Desktop\FinalMEZZ\Mezzpro\backend\pdfs'
 db = SQLAlchemy(app)
 app.secret_key = '6de23aa303c89bb1ab31a42a39b419ba3ce26cae8821cfa7c060878c63b827b1'
 
