@@ -610,7 +610,7 @@ def send_for_approval(invoice_id):
 @app.route('/came_for_approval', methods=['GET'])
 @jwt_required()
 def came_for_approval():
-    user_id = current_user.id
+    user_id = get_jwt_identity()
     sent_for_approval_records = SentForApproval.query.filter(SentForApproval.buyer_id == user_id).all()
 
     invoices_data = []
@@ -622,7 +622,7 @@ def came_for_approval():
                     'id': invoice.id,
                     'invoice_id': invoice.invoice_id,
                     'total_amount': invoice.total_amount,
-                    'due_date': invoice.due_date.strftime('%Y-%m-%d'),
+                    'due_date': invoice.due_date,
                     'pdf_url': invoice.pdf_url,
                     'buyer_metamask_address': invoice.buyer_metamask_address
                 }
@@ -630,7 +630,6 @@ def came_for_approval():
 
     logging.info(f"User {user_id} fetched invoices that came for approval.")
     return jsonify(invoices_data)
-
 # ...
 
 @app.route('/approve_invoice/<int:invoice_id>', methods=['POST'])
