@@ -492,66 +492,62 @@ def uploaded_pdf(filename):
 
 
 @app.route('/approved_invoices', methods=['GET'])
-@jwt_required()  # This decorator ensures that a valid JWT token is required for access
+@jwt_required()
 def approved_invoices():
     user_id = get_jwt_identity()
 
-    invoices = Invoice.query.filter(user=user_id).all()
+    invoices = Invoice.query.filter(Invoice.user == user_id).all()
 
     invoice_data = []
     for invoice in invoices:
-        if invoice.approval_status == True:
-            approval_status = 'Approved'
-        else:
-            approval_status = 'Approval Pending'
-        if invoice.approval_status == True:
-            invoice_list = {
-                'id': invoice.id,
-                'invoice_id': invoice.invoice_id,
-                'total_amount': invoice.total_amount,
-                'due_date': invoice.due_date,
-                'buyer_id': invoice.buyer_id,
-                'pdf_url': invoice.pdf_url,
-                'approval_status': approval_status,
-                'buyer_metamask_address': invoice.buyer_metamask_address 
-            }
-            invoice_data.append(invoice_list)
+        approval_status = 'Approved' if invoice.approval_status else 'Approval Pending'
+        invoice_list = {
+            'id': invoice.id,
+            'invoice_id': invoice.invoice_id,
+            'total_amount': invoice.total_amount,
+            'due_date': invoice.due_date,
+            'buyer_id': invoice.buyer_id,
+            'pdf_url': invoice.pdf_url,
+            'approval_status': approval_status,
+            'buyer_metamask_address': invoice.buyer_metamask_address 
+        }
+        invoice_data.append(invoice_list)
+
+    logging.info(f"User {user_id} fetched approved invoices.")
     return jsonify(invoice_data), 200
 
-
+# ...
 
 @app.route('/pending_approval_invoices', methods=['GET'])
-@jwt_required()  # This decorator ensures that a valid JWT token is required for access
+@jwt_required()
 def pending_approval_invoices():
     user_id = get_jwt_identity()
 
-    invoices = Invoice.query.filter(user=user_id).all()
+    invoices = Invoice.query.filter(Invoice.user == user_id).all()
 
     invoice_data = []
     for invoice in invoices:
-        if invoice.approval_status == True:
-            approval_status = 'Approved'
-        else:
-            approval_status = 'Approval Pending'
-        if invoice.approval_status == False:
+        approval_status = 'Approved' if invoice.approval_status else 'Approval Pending'
+        if not invoice.approval_status:
             invoice_list = {
                 'id': invoice.id,
                 'invoice_id': invoice.invoice_id,
                 'total_amount': invoice.total_amount,
-                'due_date': invoice.due_date,
+                'due_date': invoice.due_date.strftime('%Y-%m-%d'),
                 'buyer_id': invoice.buyer_id,
                 'pdf_url': invoice.pdf_url,
                 'approval_status': approval_status,
                 'buyer_metamask_address': invoice.buyer_metamask_address 
             }
             invoice_data.append(invoice_list)
+
+    logging.info(f"User {user_id} fetched pending approval invoices.")
     return jsonify(invoice_data), 200
 
-
-
+# ...
 
 @app.route('/invoices/<int:invoice_id>', methods=['DELETE'])
-@jwt_required()  # This decorator ensures that a valid JWT token is required for access
+@jwt_required()
 def delete_invoice(invoice_id):
     invoice_to_delete = Invoice.query.get(invoice_id)
 
@@ -562,33 +558,38 @@ def delete_invoice(invoice_id):
             try:
                 if os.path.exists(pdf_path):
                     os.remove(pdf_path)
-                    app.logger.info(f"Deleted PDF file: {pdf_path}")
+                    logging.info(f"Deleted PDF file: {pdf_path}")
                 else:
-                    app.logger.warning(f"PDF file not found: {pdf_path}")
+                    logging.warning(f"PDF file not found: {pdf_path}")
             except Exception as e:
-                app.logger.error(f"Error while deleting PDF file: {pdf_path}, {e}")
+                logging.error(f"Error while deleting PDF file: {pdf_path}, {e}")
 
         db.session.delete(invoice_to_delete)
         db.session.commit()
 
+        logging.info(f"Invoice with ID {invoice_id} and its associated PDF have been deleted.")
         return jsonify({"message": f"Invoice with ID {invoice_id} and its associated PDF have been deleted."}), 200
     else:
+        logging.warning(f"Invoice with ID {invoice_id} not found.")
         return jsonify({"error": "Invoice not found."}), 404
 
+# ...
 
 @app.route('/invoices/pending_approval_pdfs/<int:invoice_id>', methods=['POST'])
-@jwt_required()  # This decorator ensures that a valid JWT token is required for access
+@jwt_required()
 def send_for_approval(invoice_id):
     invoice = Invoice.query.get(invoice_id)
 
     if invoice is None:
+        logging.error(f"Invoice with ID {invoice_id} not found.")
         return jsonify({'error': 'Invoice not found.'}), 404
 
     user_id = current_user.id
     buyer_id = invoice.buyer_id
-    buyer_metamask_address = invoice.buyer_metamask_address  # Fetch the buyer's metamask address
+    buyer_metamask_address = invoice.buyer_metamask_address
 
     if user_id != invoice.user_id:
+        logging.error(f"User {user_id} does not have permission to send this invoice for approval.")
         return jsonify({'error': 'You do not have permission to send this invoice for approval.'}), 403
 
     sent_for_approval = SentForApproval(
@@ -601,19 +602,20 @@ def send_for_approval(invoice_id):
     db.session.add(sent_for_approval)
     db.session.commit()
 
+    logging.info(f"Invoice with ID {invoice_id} sent for approval successfully.")
     return jsonify({'message': 'Sent for approval successfully.'}), 200
 
-
+# ...
 
 @app.route('/came_for_approval', methods=['GET'])
-@jwt_required()  # This decorator ensures that a valid JWT token is required for access
+@jwt_required()
 def came_for_approval():
     user_id = current_user.id
-    sent_for_approval_records = SentForApproval.query.filter(buyer_id=user_id).all()
+    sent_for_approval_records = SentForApproval.query.filter(SentForApproval.buyer_id == user_id).all()
 
     invoices_data = []
     for sent_for_approval_record in sent_for_approval_records:
-        if sent_for_approval_record.approve_status == False:
+        if not sent_for_approval_record.approve_status:
             invoice = Invoice.query.get(sent_for_approval_record.invoice)
             if invoice:
                 invoice_details = {
@@ -626,23 +628,26 @@ def came_for_approval():
                 }
                 invoices_data.append(invoice_details)
 
-    # Return invoices_data here, whether it's empty or not
+    logging.info(f"User {user_id} fetched invoices that came for approval.")
     return jsonify(invoices_data)
 
-
+# ...
 
 @app.route('/approve_invoice/<int:invoice_id>', methods=['POST'])
-@jwt_required()  # This decorator ensures that a valid JWT token is required for access
+@jwt_required()
 def approve_invoice(invoice_id):
     invoice = Invoice.query.get(invoice_id)
-    sent_for_approval_row = SentForApproval.query.filter(invoice=invoice_id).first()
+    sent_for_approval_row = SentForApproval.query.filter(SentForApproval.invoice == invoice_id).first()
 
     if invoice is None or sent_for_approval_row is None:
+        logging.warning(f"Invoice with ID {invoice_id} not found.")
         return jsonify({"message": "Invoice not found"}), 404
 
     invoice.approval_status = True
     sent_for_approval_row.approve_status = True
     db.session.commit()
+
+    logging.info(f"Invoice with ID {invoice_id} approved successfully.")
     return jsonify({"message": "Invoice approved successfully"}), 200
 
 
