@@ -45,7 +45,7 @@ app = Flask(__name__)
 CORS(app, origins='https://mezzpro-production.vercel.app', supports_credentials=True)
 app.config["SQLALCHEMY_DATABASE_URI"] = 'postgresql://shreeya:GTKvyyIQBPdE2lWnD80WhuhVm8JCtJ2B@dpg-clso8ftcm5oc73b94350-a.oregon-postgres.render.com/mezzprofinal'
 load_dotenv()
-app.config['UPLOAD_FOLDER'] =  r'c:\Users\Owner\Desktop\FinalMEZZ\Mezzpro\backend\pdfs'
+app.config['UPLOAD_FOLDER'] = os.path.join('.', 'pdfs')
 db = SQLAlchemy(app)
 app.secret_key = '6de23aa303c89bb1ab31a42a39b419ba3ce26cae8821cfa7c060878c63b827b1'
 
@@ -448,12 +448,17 @@ def submit_invoice():
     pdf_url = data.get('pdf_url')
     buyer_metamask_address = data.get('buyer_metamask_address')
 
+    # Adding logging statements
+    logging.info(f"Received invoice submission request from user {user_id}")
+
     if not (invoice_id and total_amount and due_date_str and pdf_url and buyer_id and buyer_metamask_address):
+        logging.error("Missing required fields in the invoice submission request")
         return jsonify({'error': 'Missing required fields'}), 400
 
     try:
         due_date = datetime.strptime(due_date_str, '%d-%m-%Y').date()  # Update the format here
     except ValueError:
+        logging.error("Invalid due_date format in the invoice submission request. Use dd-mm-yyyy.")
         return jsonify({'error': 'Invalid due_date format. Use dd-mm-yyyy.'}), 400
 
     new_invoice = Invoice(
@@ -466,10 +471,15 @@ def submit_invoice():
         buyer_metamask_address=buyer_metamask_address 
     )
 
-    db.session.add(new_invoice)
-    db.session.commit()
-
-    return jsonify({'message': 'Invoice submitted successfully!'}), 201
+    try:
+        db.session.add(new_invoice)
+        db.session.commit()
+        logging.info(f"Invoice {invoice_id} submitted successfully by user {user_id}")
+        return jsonify({'message': 'Invoice submitted successfully!'}), 201
+    except Exception as e:
+        logging.error(f"Error while submitting invoice {invoice_id}: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Internal server error'}), 500
 
 
 @app.route('/uploads/<filename>', methods=['GET'])
