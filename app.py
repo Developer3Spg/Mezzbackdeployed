@@ -523,7 +523,7 @@ def approved_invoices():
 def pending_approval_invoices():
     user_id = get_jwt_identity()
 
-    invoices = Invoice.query.filter(Invoice.user == user_id).all()
+    invoices = Invoice.query.filter(Invoice.user_id == user_id).all()
 
     invoice_data = []
     for invoice in invoices:
