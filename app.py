@@ -664,33 +664,32 @@ def tokens():
         # Deny access and show an error message
         return jsonify({'error': 'Invoice not approved by buyer. Access denied.'}), 403
 
-
-
 @app.route('/fetch_invoice_data', methods=['GET'])
 @jwt_required()  # This decorator ensures that a valid JWT token is required for access
 def fetch_invoice_data():
     user_id = get_jwt_identity()
     invoice_id = request.args.get('invoice_id')  # Get the invoice_id from the query parameter
 
-    invoice = Invoice.query.filter_by(user=user_id, invoice_id=invoice_id).first()
+    logger.info(f"Fetching invoice data for invoice_id: {invoice_id} by user_id: {user_id}")
+
+    invoice = Invoice.query.filter_by(user_id=user_id, invoice_id=invoice_id).first()
 
     if invoice:
         invoice_data = {
             'id': invoice.id,
             'invoice_id': invoice.invoice_id,
             'total_amount': invoice.total_amount,
-            'due_date': invoice.due_date.strftime('%Y-%m-%d'),  # Convert Date to string
+            'due_date': invoice.due_date,  # Convert Date to string
             'buyer_id': invoice.buyer_id,
             'pdf_url': invoice.pdf_url,
             'approval_status': 'Approved' if invoice.approval_status else 'Approval Pending',
             'buyer_metamask_address': invoice.buyer_metamask_address
         }
+        logger.info(f"Successfully fetched invoice data for invoice_id: {invoice_id}")
         return jsonify(invoice_data), 200
     else:
+        logger.warning(f"Invoice not found for invoice_id: {invoice_id}")
         return jsonify({'message': 'Invoice not found'}), 404
-
-
-
 
 @app.route('/validate_mint_tokens', methods=['POST'])
 @jwt_required()
@@ -699,15 +698,19 @@ def validate_mint_tokens():
     invoice_amount = data.get('invoice_amount')  # Replace with the correct field name from your frontend
     requested_tokens = data.get('requested_tokens')  # Replace with the correct field name from your frontend
 
+    logger.info(f"Validating mint tokens with invoice_amount: {invoice_amount}, requested_tokens: {requested_tokens}")
+
     if invoice_amount is None or requested_tokens is None:
+        logger.warning("Missing required fields in mint token validation")
         return jsonify({'valid': False, 'message': 'Missing required fields'}), 400
 
     if requested_tokens > invoice_amount:
+        logger.warning("Requested tokens exceed invoice amount in mint token validation")
         return jsonify({'valid': False, 'message': 'Requested tokens exceed invoice amount'}), 200
     else:
+        logger.info("Token minting is valid")
         return jsonify({'valid': True, 'message': 'Token minting is valid'}), 200
 
-   
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=True)
