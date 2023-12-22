@@ -664,6 +664,8 @@ def tokens():
         # Deny access and show an error message
         return jsonify({'error': 'Invoice not approved by buyer. Access denied.'}), 403
 
+
+
 # @app.route('/fetch_invoice_data', methods=['GET'])
 # @jwt_required()  # This decorator ensures that a valid JWT token is required for access
 # def fetch_invoice_data():
@@ -675,11 +677,14 @@ def tokens():
 #     invoice = Invoice.query.filter_by(user_id=user_id, invoice_id=invoice_id).first()
 
 #     if invoice:
+#         # Convert the due_date to "dd-mm-yyyy" format
+#         due_date = invoice.due_date.strftime("%d-%m-%Y")
+
 #         invoice_data = {
 #             'id': invoice.id,
 #             'invoice_id': invoice.invoice_id,
 #             'total_amount': invoice.total_amount,
-#             'due_date': invoice.due_date,  # Convert Date to string
+#             'due_date': due_date,  # Convert Date to "dd-mm-yyyy" format
 #             'buyer_id': invoice.buyer_id,
 #             'pdf_url': invoice.pdf_url,
 #             'approval_status': 'Approved' if invoice.approval_status else 'Approval Pending',
@@ -702,14 +707,11 @@ def fetch_invoice_data():
     invoice = Invoice.query.filter_by(user_id=user_id, invoice_id=invoice_id).first()
 
     if invoice:
-        # Convert the due_date to "dd-mm-yyyy" format
-        due_date = invoice.due_date.strftime("%d-%m-%Y")
-
         invoice_data = {
             'id': invoice.id,
             'invoice_id': invoice.invoice_id,
             'total_amount': invoice.total_amount,
-            'due_date': due_date,  # Convert Date to "dd-mm-yyyy" format
+            'due_date': invoice.due_date.strftime("%Y-%m-%d"),  # Convert Date to "yyyy-mm-dd" format
             'buyer_id': invoice.buyer_id,
             'pdf_url': invoice.pdf_url,
             'approval_status': 'Approved' if invoice.approval_status else 'Approval Pending',
